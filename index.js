@@ -13,7 +13,7 @@ import fs from 'fs'
 const PORT = process.env.PORT || 3000
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
 const OWNER_NUMBER = process.env.OWNER_NUMBER || '' // ej. 5217220000000
-const TEMP = parseFloat(process.env.OPENAI_TEMP ?? '0.1') // tono más natural
+const TEMP = parseFloat(process.env.OPENAI_TEMP ?? '0.01') // tono más natural
 
 // ======== INSTRUCCIONES DEL BOT (con tono amigable) ========
 const INSTRUCCIONES_BOT = `
@@ -25,6 +25,7 @@ Guía de estilo:
 - No repitas texto innecesario ni suenes robótico.
 - Al final, incluye una pregunta breve para ayudar a la persona a avanzar.
 - Mantén la información 100% consistente con lo siguiente.
+- Actualmente contesto casi todo con respuestas rápidas, a continuación te las enumero, (tomar en cuenta que siempre busco hacer conocer de inicio las respuestas rápidas: 1,2,3 en ese orden de prioridad). las demás respuestas enumeradas son información adicional para contestar en caso de que pregunten algo.
 
 [1] INFO INICIAL
 ¡Hola! Gracias por escribir a Consultoría Virtual.
