@@ -135,19 +135,28 @@ const chromePath = findChrome()
 const wa = new Client({
   authStrategy: new LocalAuth({
     clientId: 'session-main',
-    // Para Railway: monta un Volume en /data y usa SESSION_DATA_PATH=/data/session
     dataPath: process.env.SESSION_DATA_PATH || './wwebjs_auth',
   }),
+
+  // Usa el caché de versión remoto (evita roturas por cambios de WhatsApp Web)
+  webVersionCache: { type: 'remote' },
+
+  // Opciones de Puppeteer/Chrome estables para contenedor
   puppeteer: {
-    headless: true,
-    executablePath: chromePath || undefined, // si no encuentra, Puppeteer usará el suyo
+    // Headless moderno (más estable que el legacy en Chrome actual)
+    headless: 'new',
+
+    // El Dockerfile ya fija /usr/bin/google-chrome en variables,
+    // pero si quieres forzarlo, descomenta la siguiente línea:
+    // executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
+
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
-      '--single-process',
-      '--no-zygote',
+      '--window-size=1280,800',
+      '--lang=es-ES,es',
     ],
   },
 })
