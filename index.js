@@ -115,13 +115,6 @@ function isStatus(msg) { return !msg.from.endsWith('@c.us') }
 function isOwn(msg) { return msg.fromMe }
 function isGroup(msg) { return msg.from.endsWith('@g.us') }
 
-// Monoespaciado para preservar formato (puedes desactivar con WA_MONOSPACE=0)
-const USE_MONOSPACE = (process.env.WA_MONOSPACE ?? '1') === '1'
-function toWA(text) {
-  const safe = String(text).replace(/```/g, '``\u200B`') // evita romper el bloque
-  return USE_MONOSPACE ? `\`\`\`\n${safe}\n\`\`\`` : safe
-}
-
 // Auto-detección de binario Chromium (para Railway/Dockerfile)
 function findChrome() {
   const candidates = [
@@ -170,24 +163,40 @@ const wa = new Client({
 // ======== Respuestas rápidas ========
 const R1_INFO = `¡Hola! Gracias por escribir a Consultoría Virtual.
 Te acompañamos paso a paso en el proceso para obtener tu documento de conducción del estado de Guerrero.
-- Envío sin costo adicional en el país.
-- Documento verificable en línea.
-- Pagas solo después de recibir.
-Entrega 1–2 días hábiles según zona. Si quieres detalles de costos y vigencias, responde "costos".`
+- El servicio incluye entrega sin costo adicional dentro del país.
+- El documento es expedido por autoridades estatales y puede verificarse en línea.
+- El proceso de pago se realiza únicamente después de recibir tu documento en casa.
 
-const R2_COSTOS = `Costos y vigencias (Guerrero):
-Tipo A Automovilista / Tipo C Chofer / Tipo M Motociclista
-3 años: $650 • 5 años: $700
-Pagas solo después de recibir (48h para confirmar). ¿Requisitos? Responde "requisitos".`
+La entrega puede demorar entre 1 y 2 días hábiles, dependiendo de tu zona.
+Una vez recibido, cuentas con 48 horas para confirmar el pago.
 
-const R3_REQ = `Para iniciar:
-👉 https://whatsform.com/7i2sdc (al final se envía por WhatsApp)
-Luego comparte: INE ambos lados, foto de frente sin lentes (fondo claro, sin gorra) y foto de tu firma en hoja blanca.`
+Si deseas conocer los detalles completos, como tipos de licencia, vigencias y requisitos, solo responde con la palabra "costos" y con gusto te ayudamos.`
 
-const R4_ENVIO = `Envíos a todo el país. Si es zona extendida, podemos enviar a oficina (DHL/FedEx/Estafeta) para recoger.`
-const R5_VALIDEZ = `Vigencia nacional (Art. 121 fracc. V). Licencia con QR y registro en plataformas .gob.mx.`
-const R6_VERIF = `Verificación: https://www.ixcateopandecuauhtemocgro.gob.mx`
-const R7_ASESOR = `Asesor humano: https://wa.me/527225600905`
+const R2_COSTOS = `Estos son los costos y vigencias disponibles para la gestión de tu licencia de conducir del estado de Guerrero:
+
+Tipos de licencia:
+• Tipo A: Automovilista
+• Tipo C: Chofer (automóvil + carga ligera hasta 3.5 t)
+• Tipo M: Motociclista
+
+Vigencias y costos:
+• 3 años: $650
+• 5 años: $700
+
+Recuerda: el pago se realiza únicamente después de que recibes tu licencia en tu domicilio (48 h para confirmar).
+¿Te comparto los requisitos? Responde “requisitos”.`
+
+const R3_REQ = `Para iniciar tu trámite:
+1) Completa el formulario 👉 https://whatsform.com/7i2sdc (al final puedes enviarlo por WhatsApp).
+2) Comparte en este chat:
+   • INE por ambos lados
+   • Foto de frente sin lentes (fondo claro, sin gorra)
+   • Foto de tu firma en hoja blanca`
+
+const R4_ENVIO = `Envíos a todo el país. Si tu CP es zona extendida, podemos enviar a oficina (DHL/FedEx/Estafeta) para recoger.`
+const R5_VALIDEZ = `Validez nacional (Art. 121 fracc. V). Licencia con QR y registro en plataformas .gob.mx.`
+const R6_VERIF = `Verificación en línea: https://www.ixcateopandecuauhtemocgro.gob.mx`
+const R7_ASESOR = `¿Necesitas asesor humano? Escríbenos: https://wa.me/527225600905`
 
 function quickReply(text) {
   const t = (text || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
@@ -273,14 +282,14 @@ wa.on('message', async (msg) => {
     await chat.sendStateTyping()
     await sleep(4000)
 
-    // Envía en monoespaciado para preservar formato y espacios
-    const chunks = answer.match(/[\s\S]{1,2990}/g) || [answer] // pequeño margen por los backticks
+    // Envío normal (sin monoespaciado) para que WhatsApp aplique su formato
+    const chunks = answer.match(/[\s\S]{1,3000}/g) || [answer]
     for (const ch of chunks) {
-      await wa.sendMessage(from, toWA(ch), { linkPreview: false })
+      await wa.sendMessage(from, ch, { linkPreview: false })
     }
   } catch (err) {
     console.error('Error al procesar mensaje:', err)
-    try { await wa.sendMessage(msg.from, toWA('⚠️ Ocurrió un error procesando tu mensaje. Intenta de nuevo.'), { linkPreview: false }) } catch {}
+    try { await wa.sendMessage(msg.from, '⚠️ Ocurrió un error procesando tu mensaje. Intenta de nuevo.', { linkPreview: false }) } catch {}
   }
 })
 
