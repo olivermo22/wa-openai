@@ -136,16 +136,21 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 const wa = new Client({
   authStrategy: new LocalAuth({
     clientId: 'session-main',
-    // Para Railway: monta un volumen en /data y usa SESSION_DATA_PATH=/data/session
     dataPath: process.env.SESSION_DATA_PATH || './wwebjs_auth',
   }),
   puppeteer: {
     headless: true,
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
+      process.env.CHROME_PATH ||
+      '/usr/bin/chromium',                    // 👈 forzamos Chromium del sistema
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
+      '--single-process',
+      '--no-zygote',
     ],
   },
 })
