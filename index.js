@@ -115,6 +115,13 @@ function isStatus(msg) { return !msg.from.endsWith('@c.us') }
 function isOwn(msg) { return msg.fromMe }
 function isGroup(msg) { return msg.from.endsWith('@g.us') }
 
+// Monoespaciado para preservar formato (puedes desactivar con WA_MONOSPACE=0)
+const USE_MONOSPACE = (process.env.WA_MONOSPACE ?? '1') === '1'
+function toWA(text) {
+  const safe = String(text).replace(/```/g, '``\u200B`') // evita romper el bloque
+  return USE_MONOSPACE ? `\`\`\`\n${safe}\n\`\`\`` : safe
+}
+
 // Auto-detección de binario Chromium (para Railway/Dockerfile)
 function findChrome() {
   const candidates = [
@@ -266,13 +273,14 @@ wa.on('message', async (msg) => {
     await chat.sendStateTyping()
     await sleep(4000)
 
-    const chunks = answer.match(/[\s\S]{1,3000}/g) || [answer]
+    // Envía en monoespaciado para preservar formato y espacios
+    const chunks = answer.match(/[\s\S]{1,2990}/g) || [answer] // pequeño margen por los backticks
     for (const ch of chunks) {
-      await wa.sendMessage(from, ch)
+      await wa.sendMessage(from, toWA(ch), { linkPreview: false })
     }
   } catch (err) {
     console.error('Error al procesar mensaje:', err)
-    try { await wa.sendMessage(msg.from, '⚠️ Ocurrió un error procesando tu mensaje. Intenta de nuevo.') } catch {}
+    try { await wa.sendMessage(msg.from, toWA('⚠️ Ocurrió un error procesando tu mensaje. Intenta de nuevo.'), { linkPreview: false }) } catch {}
   }
 })
 
