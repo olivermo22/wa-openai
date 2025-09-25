@@ -13,11 +13,18 @@ import fs from 'fs'
 const PORT = process.env.PORT || 3000
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
 const OWNER_NUMBER = process.env.OWNER_NUMBER || '' // ej. 5217220000000
+const TEMP = parseFloat(process.env.OPENAI_TEMP ?? '0.1') // tono más natural
 
-// ======== INSTRUCCIONES DEL BOT (prompt del asistente) ========
+// ======== INSTRUCCIONES DEL BOT (con tono amigable) ========
 const INSTRUCCIONES_BOT = `
 Trabajas en una Gestoría llamada "CONSULTORIAVIRTUAL". Eres un bot de servicio al cliente cuya misión es aclarar dudas para tramitar la licencia de conducir del estado de Guerrero.
-De forma proactiva, prioriza siempre mostrar las "respuestas rápidas" 1, 2 y 3 (en ese orden) cuando el cliente pida información general. Si el cliente pregunta por algo específico, usa la sección correspondiente.
+
+Guía de estilo:
+- Habla de forma cercana, clara y profesional (de tú).
+- Resume y usa viñetas cuando ayuden a entender mejor.
+- No repitas texto innecesario ni suenes robótico.
+- Al final, incluye una pregunta breve para ayudar a la persona a avanzar.
+- Mantén la información 100% consistente con lo siguiente.
 
 [1] INFO INICIAL
 ¡Hola! Gracias por escribir a Consultoría Virtual.
@@ -49,7 +56,7 @@ Luego comparte: INE por ambos lados, foto de frente sin lentes (fondo claro, sin
 El trámite es del estado de Guerrero. Es válido en todo México, con QR y registro en plataforma .gob.mx. Envíos a todo el país: primero recibes y después pagas.
 
 [5] DÓNDE VERIFICAR
-https://www.ixcateopandecuauhtemocgro.gob.mx (datos oficiales de contacto ahí mismo).
+https://permisosylicenciascopalillogro.gob.mx (datos oficiales de contacto ahí mismo).
 
 [6] MARCO LEGAL (validez nacional)
 Art. 121 fracción V de la Constitución: documentos oficiales emitidos conforme a la ley de un estado tienen validez en toda la República.
@@ -160,57 +167,7 @@ const wa = new Client({
   },
 })
 
-// ======== Respuestas rápidas ========
-const R1_INFO = `¡Hola! Gracias por escribir a Consultoría Virtual.
-Te acompañamos paso a paso en el proceso para obtener tu documento de conducción del estado de Guerrero.
-- El servicio incluye entrega sin costo adicional dentro del país.
-- El documento es expedido por autoridades estatales y puede verificarse en línea.
-- El proceso de pago se realiza únicamente después de recibir tu documento en casa.
-
-La entrega puede demorar entre 1 y 2 días hábiles, dependiendo de tu zona.
-Una vez recibido, cuentas con 48 horas para confirmar el pago.
-
-Si deseas conocer los detalles completos, como tipos de licencia, vigencias y requisitos, solo responde con la palabra "costos" y con gusto te ayudamos.`
-
-const R2_COSTOS = `Estos son los costos y vigencias disponibles para la gestión de tu licencia de conducir del estado de Guerrero:
-
-Tipos de licencia:
-• Tipo A: Automovilista
-• Tipo C: Chofer (automóvil + carga ligera hasta 3.5 t)
-• Tipo M: Motociclista
-
-Vigencias y costos:
-• 3 años: $650
-• 5 años: $700
-
-Recuerda: el pago se realiza únicamente después de que recibes tu licencia en tu domicilio (48 h para confirmar).
-¿Te comparto los requisitos? Responde “requisitos”.`
-
-const R3_REQ = `Para iniciar tu trámite:
-1) Completa el formulario 👉 https://whatsform.com/7i2sdc (al final puedes enviarlo por WhatsApp).
-2) Comparte en este chat:
-   • INE por ambos lados
-   • Foto de frente sin lentes (fondo claro, sin gorra)
-   • Foto de tu firma en hoja blanca`
-
-const R4_ENVIO = `Envíos a todo el país. Si tu CP es zona extendida, podemos enviar a oficina (DHL/FedEx/Estafeta) para recoger.`
-const R5_VALIDEZ = `Validez nacional (Art. 121 fracc. V). Licencia con QR y registro en plataformas .gob.mx.`
-const R6_VERIF = `Verificación en línea: https://www.ixcateopandecuauhtemocgro.gob.mx`
-const R7_ASESOR = `¿Necesitas asesor humano? Escríbenos: https://wa.me/527225600905`
-
-function quickReply(text) {
-  const t = (text || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
-  if (/(hola|buenas|info|informacion|hey)/.test(t)) return R1_INFO
-  if (/(costo|costos|precio|precios|vigencia|vigencias|cuanto|cuánto)/.test(t)) return R2_COSTOS
-  if (/(requisito|requisitos|tramite|formulario|form)/.test(t)) return R3_REQ
-  if (/(envio|entrega|paqueteria|dhl|fedex|estafeta|zona extendida)/.test(t)) return R4_ENVIO
-  if (/(validez|legal|nacional|constitucion|articulo 121)/.test(t)) return R5_VALIDEZ
-  if (/(verificar|verificacion|qr|gob\.mx|pagina)/.test(t)) return R6_VERIF
-  if (/(asesor|humano|ayuda personal)/.test(t)) return R7_ASESOR
-  return null
-}
-
-// --- Memoria por chat y OpenAI helpers ---
+// --- Memoria corta por chat + OpenAI helpers ---
 const MAX_MEMORY = 8
 const memory = new Map() // key: chatId, value: [{role, content}]
 
@@ -233,7 +190,7 @@ async function askOpenAI(chatId, userText) {
   const resp = await openai.chat.completions.create({
     model: MODEL,
     messages: buildMessages(chatId, userText),
-    temperature: 0.3,
+    temperature: TEMP,
   })
   const answer = resp.choices?.[0]?.message?.content?.trim() || 'Lo siento, no pude generar respuesta.'
   pushMemory(chatId, 'user', userText)
@@ -272,17 +229,14 @@ wa.on('message', async (msg) => {
     const text = (msg.body || '').trim()
     if (!text) return
 
-    // Atajos de “respuestas rápidas”
-    const qrAnswer = quickReply(text)
-
     await chat.sendStateTyping()
-    const answer = qrAnswer ?? await askOpenAI(chatId, text.length < 2 ? 'Hola' : text)
+    const answer = await askOpenAI(chatId, text)
 
     // Mantén typing y espera 4s para humanizar
     await chat.sendStateTyping()
     await sleep(4000)
 
-    // Envío normal (sin monoespaciado) para que WhatsApp aplique su formato
+    // Envío normal (sin monoespaciado) para formato amable de WhatsApp
     const chunks = answer.match(/[\s\S]{1,3000}/g) || [answer]
     for (const ch of chunks) {
       await wa.sendMessage(from, ch, { linkPreview: false })
