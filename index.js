@@ -111,25 +111,26 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 // --- Utilidades varias ---
 const sleep = (ms) => new Promise(res => setTimeout(res, ms))
-
 function isStatus(msg) { return !msg.from.endsWith('@c.us') }
 function isOwn(msg) { return msg.fromMe }
 function isGroup(msg) { return msg.from.endsWith('@g.us') }
 
-// Auto-detección de binario Chromium (para Railway)
+// Auto-detección de binario Chromium (para Railway/Dockerfile)
 function findChrome() {
   const candidates = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
     process.env.CHROME_PATH,
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome',
     '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
   ].filter(Boolean)
   return candidates.find(p => { try { return fs.existsSync(p) } catch { return false } }) || null
 }
-
 const chromePath = findChrome()
+
+// ===== Fijamos una versión estable de WhatsApp Web =====
+const WA_WEB_VER = '2.2412.54' // si algún día falla, cambia por otra del repo wppconnect
 
 // --- WhatsApp client ---
 const wa = new Client({
@@ -138,18 +139,16 @@ const wa = new Client({
     dataPath: process.env.SESSION_DATA_PATH || './wwebjs_auth',
   }),
 
-  // Usa el caché de versión remoto (evita roturas por cambios de WhatsApp Web)
-  webVersionCache: { type: 'remote' },
+  // Bloquea versión y usa caché remoto con ruta explícita (evita roturas)
+  webVersion: WA_WEB_VER,
+  webVersionCache: {
+    type: 'remote',
+    remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${WA_WEB_VER}.html`,
+  },
 
-  // Opciones de Puppeteer/Chrome estables para contenedor
   puppeteer: {
-    // Headless moderno (más estable que el legacy en Chrome actual)
     headless: 'new',
-
-    // El Dockerfile ya fija /usr/bin/google-chrome en variables,
-    // pero si quieres forzarlo, descomenta la siguiente línea:
-    // executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
-
+    executablePath: chromePath || undefined, // en Dockerfile se fija por ENV; local puede usar el propio
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
