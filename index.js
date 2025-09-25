@@ -84,7 +84,7 @@ https://permisosylicenciascopalillogro.gob.mx/
 
 Esta es la página del municipio para validar su licencia y los datos de contacto para asistencia jurídica. 
 
-Para mayores informes en el área de Tesorería y Tránsito Municipal Plaza Eulalia Guzman S/N Col. Centro, Ixcateopan de Cuauhtemoc Guerrero, C.P. 40430, H. Ayuntamiento Municipal Constitucional, Tels. 7621205397 en un horario de 9:00am a 4:00pm.
+Para mayores informes en el área de Tesorería y Tránsito Municipal Juan N Alvarez S/N, Colonia Centro 41060, Copalillo, Gro. H. Ayuntamiento Municipal Constitucional, Tels. 7271101325 en un horario de 9:00am a 6:00pm.
 (Estos datos también los puede encontrar en la página)
 
 6. DAR ESTA INFORMACION PARA ACLARAR QUE ES VALIDA EN TODO EL PAIS
