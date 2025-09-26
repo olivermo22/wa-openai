@@ -45,8 +45,8 @@ Si no se realiza dentro de ese plazo, el documento será dado de baja por el sis
 Tipos de licencia:
 
 Tipo A: Automovilista
-Tipo B: Chofer (automóvil + carga ligera hasta 3.5 toneladas)
-Tipo C: Motociclista
+Tipo C: Chofer (automóvil + carga ligera hasta 3.5 toneladas)
+Tipo M: Motociclista
 
 Vigencias y costos:
 
